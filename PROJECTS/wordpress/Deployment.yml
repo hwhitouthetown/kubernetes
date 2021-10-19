@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      containers:
+      - image: wordpress:php8.0-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DEBUG
+          value: "true"
+        - name: WORDPRESS_DB_HOST
+          value: mysql-service:81
+        - name: WORDPRESS_DB_USER
+          value: "root"
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-wp
+              key: rootpwd
+        ports:
+        - containerPort: 80
+          name: wordpress
+        volumeMounts:
+        - name: wordpress-ps
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-ps
+        persistentVolumeClaim:
+          claimName: app-wp-vc
+      #resources:
+      # requests:
+      #    memory: "150M"
+      #    cpu: "500m"
+      #  limits:
+      #    memory: "250M"
+      #    cpu: "500m"
